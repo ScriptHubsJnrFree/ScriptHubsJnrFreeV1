@@ -7,8 +7,6 @@
 local Players = game:GetService("Players")
 local UIS = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
-local TeleportService = game:GetService("TeleportService")
-local HttpService = game:GetService("HttpService")
 
 local Player = Players.LocalPlayer
 local PlayerGui = Player:WaitForChild("PlayerGui")
@@ -28,7 +26,6 @@ local BUTTON = Color3.fromRGB(17,24,21)
 local HOVER = Color3.fromRGB(24,42,31)
 local WHITE = Color3.fromRGB(240,255,248)
 local GRAY = Color3.fromRGB(130,150,140)
-local RED = Color3.fromRGB(255,75,75)
 
 --========================================================--
 -- BORRAR ANTERIOR
@@ -144,7 +141,7 @@ local Close = Instance.new("TextButton")
 Close.Size = UDim2.fromOffset(29,29)
 Close.Position = UDim2.new(1,-36,0,8)
 Close.BackgroundColor3 = BUTTON
-Close.Text = "Ã—"
+Close.Text = "×"
 Close.TextColor3 = WHITE
 Close.Font = Enum.Font.GothamBold
 Close.TextSize = 18
@@ -289,93 +286,7 @@ local function Button(text, callback)
 end
 
 --========================================================--
--- SERVER HOPPER LOGIC
---========================================================--
-
-local Hopping = false
-
-local function ServerHop(btn)
-    if Hopping then return end
-    Hopping = true
-
-    local originalText = btn.Text
-    btn.Text = "Searching..."
-    btn.TextColor3 = GRAY
-
-    local PlaceId = game.PlaceId
-    local JobId = game.JobId
-    local req = (syn and syn.request) or (http and http.request) or http_request or (fluxus and fluxus.request) or request
-
-    if req then
-        local targetServerId = nil
-        local cursor = ""
-        local lowServers = {}
-
-        for page = 1, 6 do
-            local url = string.format("https://games.roblox.com/v1/games/%d/servers/0?sortOrder=Asc&limit=100%s", PlaceId, cursor ~= "" and "&cursor="..cursor or "")
-            local success, raw = pcall(function() return req({Url = url}) end)
-
-            if success and raw and raw.Body then
-                local body = HttpService:JSONDecode(raw.Body)
-                if body and body.data then
-                    for _, server in ipairs(body.data) do
-                        if type(server) == "table" and server.id ~= JobId then
-                            local playing = server.playing or 0
-                            local maxPlayers = server.maxPlayers or 0
-                            
-                            if playing > 0 and playing <= 3 and playing < maxPlayers then
-                                table.insert(lowServers, server)
-                            end
-                        end
-                    end
-                    cursor = body.nextPageCursor or ""
-                end
-            end
-
-            if cursor == "" or #lowServers >= 5 then break end
-            task.wait(0.15)
-        end
-
-        table.sort(lowServers, function(a, b) return a.playing < b.playing end)
-
-        if #lowServers > 0 then
-            targetServerId = lowServers[1].id
-        end
-
-        if targetServerId then
-            btn.Text = "READY!"
-            btn.TextColor3 = GREEN
-            task.wait(0.4)
-            TeleportService:TeleportToPlaceInstance(PlaceId, targetServerId, Player)
-        else
-            btn.Text = "No Server Found"
-            btn.TextColor3 = RED
-            task.wait(1.5)
-            btn.Text = originalText
-            btn.TextColor3 = WHITE
-        end
-    else
-        btn.Text = "READY!"
-        btn.TextColor3 = GREEN
-        task.wait(0.4)
-        TeleportService:Teleport(PlaceId, Player)
-    end
-
-    Hopping = false
-end
-
-local function Rejoin(btn)
-    btn.Text = "Rejoining..."
-    btn.TextColor3 = GRAY
-    task.wait(0.5)
-    btn.Text = "READY!"
-    btn.TextColor3 = GREEN
-    task.wait(0.3)
-    TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, Player)
-end
-
---========================================================--
--- SCRIPTS CÃ“DIGO EJECUTABLE
+-- SCRIPTS CÓDIGO EJECUTABLE
 --========================================================--
 
 local function Scripts()
@@ -420,17 +331,6 @@ local function Scripts()
 end
 
 --========================================================--
--- SERVER TAB
---========================================================--
-
-local function ServerTab()
-    Clear()
-    Section("SERVER UTILITIES")
-    Button("Server Hop (Low Players)", function(btn) ServerHop(btn) end)
-    Button("Rejoin Server", function(btn) Rejoin(btn) end)
-end
-
---========================================================--
 -- OWNER
 --========================================================--
 
@@ -438,7 +338,7 @@ local function Owner()
     Clear()
     Section("SOCIAL LINKS")
 
-    Button("TikTok  â€¢  @jeiner_xx", function()
+    Button("TikTok  •  @jeiner_xx", function()
         print("TikTok: @jeiner_xx")
     end)
 
@@ -471,8 +371,8 @@ local function Owner()
         Box.CursorPosition = #DISCORD + 1
     end)
 
-    Button("Promoter  â€¢  Jeiner")
-    Button("Promoter  â€¢  Jeiner_xx")
+    Button("Promoter  •  Jeiner")
+    Button("Promoter  •  Jeiner_xx")
 end
 
 --========================================================--
@@ -514,7 +414,6 @@ local function MenuButton(text, callback)
 end
 
 local ScriptsButton = MenuButton("SCRIPTS", Scripts)
-local ServerTabButton = MenuButton("SERVER", ServerTab)
 local OwnerButton = MenuButton("OWNER", Owner)
 
 ScriptsButton.BackgroundColor3 = GREEN_DARK
@@ -545,7 +444,7 @@ FloatingStroke.Thickness = 1.5
 FloatingStroke.Parent = Floating
 
 --========================================================--
--- MOVER CÃRCULO
+-- MOVER CÍRCULO
 --========================================================--
 
 local FloatingDragging = false
